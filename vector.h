@@ -1,5 +1,12 @@
 #pragma once
+#ifndef VECTOR_H
+#define VECTOR_H
 
+
+
+#include<iostream>
+#include "Fib.h"
+using namespace std;
 using Rank = int; //秩
 #define DEFAULT_CAPACITY  10 //默认的初始容量（实际应用中可设置为更大）
 
@@ -52,9 +59,22 @@ public:
    int deduplicate(); //无序去重
    int uniquify(); //有序去重
 // 遍历
+   
    void traverse ( void (* ) ( T& ) ); //遍历（使用函数指针，只读或局部性修改）
    template <typename VST> void traverse ( VST& ); //遍历（使用函数对象，可全局性修改）
 }; //Vector
+
+
+
+/*
+*************************************************************************************************************
+  无序向量
+
+
+*************************************************************************************************************
+*/
+
+
 
 /*
   复制函数
@@ -97,10 +117,20 @@ void Vector<T>::expand(){
 /*
   缩容操作
 */
-// template <typename T>
-// void Vector<T>::shrink(){
-    
-// }
+template <typename T>
+void Vector<T>::shrink(){
+     if(_capacity<DEFAULT_CAPACITY<<1) return ;
+     if(_size<<2>_capacity) return;
+
+     T *oldElem =_elem;
+     _elem = new T[_capacity>>=1];
+
+     for(int i =0;i<_size;i++){
+        _elem[i]=oldElem[i];
+     } 
+
+     delete [] oldElem;
+}
 
 /*
   寻秩访问操作
@@ -126,6 +156,11 @@ Rank Vector<T>::insert ( Rank r, T const& e ){
      return r;
 }
 
+
+/**
+ * 区间删除
+ * 
+ */
 template<typename T>//开区间删除
 int  Vector<T>::remove ( Rank lo, Rank hi ){
    if (lo >= hi) return 0 ;
@@ -137,6 +172,10 @@ int  Vector<T>::remove ( Rank lo, Rank hi ){
 
 }
 
+/**
+ * 单个元素删除 
+ * 
+ */
 template<typename T>
 T Vector<T>::remove(Rank r){
     T e = _elem[r];
@@ -144,19 +183,105 @@ T Vector<T>::remove(Rank r){
     return e;
 }
 
+
+/**
+ *查找元素并返回秩
+ * 
+ */
 template<typename T>//开区间 表达式hi--先于第二个表达式执行
 Rank Vector<T>::find(T const &e,Rank lo,Rank hi) const {
-   while((lo<hi--) && (e!=_elem[hi]));
+   while ((lo<hi--) && (e!=_elem[hi]));
+   //从后向前寻找；这个循环与后面return不构成关系；统一返回-1;设置哨兵元素
    return hi;        //hi<lo 代表寻找失败
 }
 
+/**
+ * 唯一化
+ * 
+ */
 template<typename T>
 int  Vector<T>::deduplicate(){
       int oldsize=_size;
       Rank i=1;
-      while(i<_size){
+      while(i<_size){//循环控制条件；当为单元素数组时直接退出循环
       (find(_elem[i],0,i)<0)?i++:remove(i);
       }
-      return oldsize-_size;
+      return oldsize-_size;   
       
 }
+
+
+/**
+ * 遍历
+ * 遍历向量
+ */
+template<typename T>
+void Vector<T>::traverse(void(*visit)(T &t)){
+     for(int i=0;i<_size;i++){
+        visit(_elem[i]);
+     }
+}
+
+
+/*
+*************************************************************************************************************
+  有序向量
+  函数定义
+
+*************************************************************************************************************
+*/
+
+
+/*
+***
+唯一化(去除有序向量中的重复元素)
+***
+*/
+template <typename T>
+int Vector<T>::uniquify(){
+     Rank i =0,j=0;
+     while(++j<_size){
+        if(_elem[i]!=_elem[j]) {
+           _elem[i+1]=_elem[j];
+           ++i;
+           } 
+     }
+     _size = ++i;
+     shrink();
+     
+     return  j-i;
+}
+
+/***
+ * 
+ * 有序向量查找（二分和斐波那契数列查找）
+ * 
+ */
+
+
+// template <typename T>
+// Rank Vector<T>::search (T const &e,Rank lo,Rank hi) const {
+//     return (rand()%2) ? binSearch(_elem,e,lo,hi):fibSearch(_elem,e,lo,hi);
+// }
+
+template <typename T>
+Rank binSearch(T* A,T const&e,Rank lo,Rank hi){
+   Rank op = 0;
+   while(lo<hi){
+      op = (lo+hi)>>1;
+      if(e<A[op]) hi = op;
+      else if (A[op]<e) lo =op +1;
+      else return op; 
+   }
+
+   return -1;
+}
+
+// template  <typename T>
+// Rank fibSearch(T *A,T const&e,Rank lo,Rank hi){
+     
+// }
+
+
+
+#endif

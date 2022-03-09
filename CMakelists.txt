@@ -1,0 +1,3 @@
+project(mystl)
+
+add_executable(mystl main.cpp)
